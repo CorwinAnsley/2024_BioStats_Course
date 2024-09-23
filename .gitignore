@@ -47,3 +47,7 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# tutorial content
+tutorial\ data-20240923/
+tutorial\ worksheets-20240923/
