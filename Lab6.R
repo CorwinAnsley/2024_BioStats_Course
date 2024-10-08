@@ -341,7 +341,7 @@ model1 = lm(meta_gene_data$ENSG00000163520 ~ meta_gene_data$AGE)
 #Task 6. Explore the output of the model with the anova command
 
 anova1 = anova(model1)
-
+anova1
 #print(anova1$Sum)
 
 641733/231
@@ -377,6 +377,15 @@ summary(model1)
 
 #Task 13. Write the algebraic structure of the model
 # f(gene expression) = [F, M] + c = [0, -36.08] + 253.681 =[253.68, 217.60]
+
+#Task 14. Visualise the model fit, i.e plot the means on a boxplot or violin plot of sex v expression
+
+ggp = ggplot(meta_gene_data, aes(x=SEX, y=ENSG00000163520, fill=SEX)) + 
+  geom_violin() + 
+  geom_boxplot(width=0.1, color="grey", alpha=0.2) +
+  stat_summary(fun=mean, colour="red") +
+  labs(x="Sex", y="expression")
+ggp
 
 #Task 15. How might you describe the relationship between your variables
 # Sex affects gene expression, with gene expression on average greater in females
