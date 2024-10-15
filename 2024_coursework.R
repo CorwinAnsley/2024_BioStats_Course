@@ -9,7 +9,7 @@ library(ggfortify)
 annotations = read.table("C:/Users/2266643A/repos/2024_BioStats_Course/Data_Report_Assessment/Annotations.csv", header=TRUE, row.names=1, sep="\t")
 de_gout_vs_hc = read.table("C:/Users/2266643A/repos/2024_BioStats_Course/Data_Report_Assessment/DE_GOUT_vs_HC.csv", header=TRUE, row.names=1, sep="\t")
 de_sa_vs_hc = read.table("C:/Users/2266643A/repos/2024_BioStats_Course/Data_Report_Assessment/DE_SA_vs_HC.csv", header=TRUE, row.names=1, sep="\t")
-expression_table = read.table("C:/Users/2266643A/repos/2024_BioStats_Course/Data_Report_Assessment/Expression_Table.csv", header=TRUE, row.names=1, sep="\t")
+exprn_table = read.table("C:/Users/2266643A/repos/2024_BioStats_Course/Data_Report_Assessment/Expression_Table.csv", header=TRUE, row.names=1, sep="\t")
 sample_info = read.table("C:/Users/2266643A/repos/2024_BioStats_Course/Data_Report_Assessment/Sample_Information.csv", header=TRUE, row.names=1, sep="\t")
 
 #Are groups well matched 
@@ -26,4 +26,14 @@ summary(sample_info_sa)
 
 #Plot Neutrophils for each group to compare
 ggp = ggplot(sample_info, aes(x=SAMPLE_GROUP, y=NEUTROPHILS)) + geom_boxplot() + labs(x="Sample Group", y="Sample Group", title="Neutrophils in sample groups")
+#ggp
+
+#PCA test
+
+PCA = prcomp(t(exprn_table))
+pca_coordinates = data.frame(PCA$x)
+print(pca_coordinates)
+
+ggp = ggplot(pca_coordinates, aes(x=PC1, y= PC2, colour = sample_info$SAMPLE_GROUP)) +
+  geom_point()
 ggp
