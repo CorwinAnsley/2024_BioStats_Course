@@ -26,7 +26,7 @@ summary(sample_info_sa)
 
 #Plot Neutrophils for each group to compare
 ggp = ggplot(sample_info, aes(x=SAMPLE_GROUP, y=NEUTROPHILS)) + geom_boxplot() + labs(x="Sample Group", y="Sample Group", title="Neutrophils in sample groups")
-#ggp
+ggp
 
 #PCA test
 
@@ -36,4 +36,15 @@ print(pca_coordinates)
 
 ggp = ggplot(pca_coordinates, aes(x=PC1, y= PC2, colour = sample_info$SAMPLE_GROUP)) +
   geom_point()
-ggp
+#ggp
+
+# histogram of neutrophils
+ggp = ggplot(sample_info, aes(x=NEUTROPHILS)) + 
+  geom_histogram() + 
+  labs(x="neutrophil_score", y="count", title="Neutrophils")
+
+#ggp
+
+# creating a 
+
+
