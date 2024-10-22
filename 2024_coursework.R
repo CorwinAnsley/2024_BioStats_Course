@@ -1,8 +1,8 @@
 #install dependencies
-install.packages("ggplot2")
+#install.packages("ggplot2")
 library(ggplot2)
 
-install.packages("ggfortify")
+#install.packages("ggfortify")
 library(ggfortify)
 
 #Import Data
@@ -23,10 +23,11 @@ sample_info_sa = subset(sample_info, sample_info['SAMPLE_GROUP'] == 'SEPSIS')
 summary(sample_info_hc)
 summary(sample_info_gout)
 summary(sample_info_sa)
+summary(sample_info)
 
 #Plot Neutrophils for each group to compare
 ggp = ggplot(sample_info, aes(x=SAMPLE_GROUP, y=NEUTROPHILS)) + geom_boxplot() + labs(x="Sample Group", y="Sample Group", title="Neutrophils in sample groups")
-ggp
+#ggp
 
 #PCA test
 
@@ -45,6 +46,30 @@ ggp = ggplot(sample_info, aes(x=NEUTROPHILS)) +
 
 #ggp
 
-# creating a 
+# adds annotations
+get_annotated_data = function(data_frame, annotations) {
+  df_annotated = merge(data_frame, annotations, by.x=0, by.y=0)
+  row.names(df_annotated) = df_annotated[,'Row.names']
+  df_annotated = subset(df_annotated, select= -Row.names)
+  return (df_annotated)
+}
 
+# filters for values below set p threshold
+filter_for_sig_genes = function(data_frame, p_max = 0.05, p_column = 'p.adj') {
+  data_frame = subset(data_frame, data_frame[p_column] < p_max)
+  return(data_frame)
+}
 
+de_gout_vs_hc_annotated = get_annotated_data(de_gout_vs_hc, annotations)
+de_sa_vs_hc_annotated = get_annotated_data(de_sa_vs_hc, annotations)
+
+de_gout_vs_hc_antd_sig = filter_for_sig_genes(de_gout_vs_hc_annotated)
+de_sa_vs_hc_antd_sig = filter_for_sig_genes(de_sa_vs_hc_annotated)
+
+create_plots = function(data_frame, num_plots, sort_by = 'p.adj') {
+  plots = c(length(num_plots))
+  data_frame = data_frame[order(-data_frame$sort_by),]
+  for (i in 1:num_plots)
+    plots[i] = 
+    
+}
