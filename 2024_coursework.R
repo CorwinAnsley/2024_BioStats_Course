@@ -60,16 +60,31 @@ filter_for_sig_genes = function(data_frame, p_max = 0.05, p_column = 'p.adj') {
   return(data_frame)
 }
 
+# Helper function to get data for specific gene
+get_gene_data = function(gene, gene_frame) {
+  gene_data = gene_frame[gene,]
+  gene_data = t(gene_data)
+  gene_data = data.frame(gene_data)
+  names(gene_data)[1] = 'gene'
+  return (gene_data)
+}
+
 de_gout_vs_hc_annotated = get_annotated_data(de_gout_vs_hc, annotations)
 de_sa_vs_hc_annotated = get_annotated_data(de_sa_vs_hc, annotations)
 
 de_gout_vs_hc_antd_sig = filter_for_sig_genes(de_gout_vs_hc_annotated)
 de_sa_vs_hc_antd_sig = filter_for_sig_genes(de_sa_vs_hc_annotated)
+ 
 
-create_plots = function(data_frame, num_plots, sort_by = 'p.adj') {
+create_plots = function(de_frame, exprn_table, num_plots, sort_by = 'p.adj') {
   plots = c(length(num_plots))
-  data_frame = data_frame[order(-data_frame$sort_by),]
-  for (i in 1:num_plots)
-    plots[i] = 
+  de_df_sorted = de_frame[order(-data_frame$sort_by),]
+  for (i in 1:num_plots) {
+    gene_symbol = de_df_sorted[i,'symbol']
+    gene_data = get_gene_data(rownames(de_df_sorted)[i], exprn_table)
+    plots[i] =  ggp = ggplot(data_frame, aes(x=)) + 
+    geom_dotplot(fill="blue") + 
+    labs(x="expression (log10)", y="number of samples")
+  }
     
 }
