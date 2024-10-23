@@ -69,22 +69,37 @@ get_gene_data = function(gene, gene_frame) {
   return (gene_data)
 }
 
+# Gets gene data along with samplegroup
+get_sample_group_gene_data = function(gene, gene_frame, sample_info) {
+  gene_data = get_gene_data(gene, gene_frame)
+  gene_data['sample_group'] = sample_info['SAMPLE_GROUP']
+  return (gene_data)
+}
+
+
 de_gout_vs_hc_annotated = get_annotated_data(de_gout_vs_hc, annotations)
 de_sa_vs_hc_annotated = get_annotated_data(de_sa_vs_hc, annotations)
 
 de_gout_vs_hc_antd_sig = filter_for_sig_genes(de_gout_vs_hc_annotated)
 de_sa_vs_hc_antd_sig = filter_for_sig_genes(de_sa_vs_hc_annotated)
- 
 
-create_plots = function(de_frame, exprn_table, num_plots, sort_by = 'p.adj') {
+#de_df_sorted = de_gout_vs_hc_antd_sig[order(de_gout_vs_hc_antd_sig$'p.adj'),,] 
+
+create_plots_gene_ex = function(de_frame, exprn_table, num_plots, sample_info) { #sort_by = "p.adj"
   plots = c(length(num_plots))
-  de_df_sorted = de_frame[order(-data_frame$sort_by),]
+  de_df_sorted = de_frame[order(de_frame$'p.adj'),,]
   for (i in 1:num_plots) {
     gene_symbol = de_df_sorted[i,'symbol']
-    gene_data = get_gene_data(rownames(de_df_sorted)[i], exprn_table)
-    plots[i] =  ggp = ggplot(data_frame, aes(x=)) + 
+    gene_data = get_sample_group_gene_data(rownames(de_df_sorted)[i], exprn_table, sample_group)
+    ggp = ggplot(gene_data, aes(x=sample_group, y=log10(gene)), title=gene_symbol) +
     geom_dotplot(fill="blue") + 
-    labs(x="expression (log10)", y="number of samples")
+    labs(x="samplegroup", y="expression")
+    #filename = #paste('C:\Users\2266643A\repos\2024_BioStats_Course\plot_', gene_data, sep='_')
+    ggsave('C:\\Users\\2266643A\\repos\\2024_BioStats_Course\\coursework_plots\\plot_.png')
   }
-    
+  return(plots)
 }
+
+gout_gene_plots = create_plots_gene_ex(de_gout_vs_hc_antd_sig, exprn_table, 2, sample_info)
+ggp = gout_gene_plots[2]
+ggp
