@@ -85,21 +85,40 @@ de_sa_vs_hc_antd_sig = filter_for_sig_genes(de_sa_vs_hc_annotated)
 
 #de_df_sorted = de_gout_vs_hc_antd_sig[order(de_gout_vs_hc_antd_sig$'p.adj'),,] 
 
-create_plots_gene_ex = function(de_frame, exprn_table, num_plots, sample_info) { #sort_by = "p.adj"
-  plots = c(length(num_plots))
-  de_df_sorted = de_frame[order(de_frame$'p.adj'),,]
+create_plots_gene_ex = function(df, exprn_table, num_plots, sample_info) { #sort_by = "p.adj"
+  #plots = c(length(num_plots))
+  #de_df_sorted = de_frame[order(de_frame$'p.adj'),,]
   for (i in 1:num_plots) {
-    gene_symbol = de_df_sorted[i,'symbol']
-    gene_data = get_sample_group_gene_data(rownames(de_df_sorted)[i], exprn_table, sample_group)
-    ggp = ggplot(gene_data, aes(x=sample_group, y=log10(gene)), title=gene_symbol) +
-    geom_dotplot(fill="blue") + 
+    gene_symbol = df[i,'symbol']
+    print(gene_symbol)
+    gene_data = get_sample_group_gene_data(rownames(df)[i], exprn_table, sample_info)
+    #plot_title = gene_symbol
+    ggp = ggplot(gene_data, aes(x=sample_group, y=log10(gene), colour=sample_group), title=gene_symbol) +
+    geom_point(fill = "blue") + 
     labs(x="samplegroup", y="expression")
-    #filename = #paste('C:\Users\2266643A\repos\2024_BioStats_Course\plot_', gene_data, sep='_')
-    ggsave('C:\\Users\\2266643A\\repos\\2024_BioStats_Course\\coursework_plots\\plot_.png')
+    ggp
+    filename = paste('C:\\Users\\2266643A\\repos\\2024_BioStats_Course\\Coursework_plots\\plot_', gene_symbol, sep='_')
+    #ggsave('C:\\Users\\2266643A\\repos\\2024_BioStats_Course\\plot.png')
+    ggsave(paste(filename, '.png'))
   }
-  return(plots)
+  #return(plots)
 }
 
-gout_gene_plots = create_plots_gene_ex(de_gout_vs_hc_antd_sig, exprn_table, 2, sample_info)
-ggp = gout_gene_plots[2]
-ggp
+#sort genes by biggest difference in log2fold
+get_sorted_genes = function(df1, df2) {
+  #df1 <- df1 %>% 
+  #  add_column(delta_log2fold = 0)
+  df1[,'delta_log2fold'] = 0
+  for (i in 1:nrow(df1)) { 
+    row_name = rownames(df1)[i]
+    df1[i,'delta_log2fold'] = abs(df1[i,'log2Fold'] - df2[row_name,'log2Fold'])
+    }
+  df1_sorted = df1[order(df1$'delta_log2fold'),,]
+  return(df1_sorted)
+}
+
+de_sa_vs_hc_antd_sig_sorted = get_sorted_genes(de_sa_vs_hc_antd_sig, de_gout_vs_hc) 
+#gout_gene_plots = 
+create_plots_gene_ex(de_sa_vs_hc_antd_sig_sorted, exprn_table, 5, sample_info)
+#ggp = gout_gene_plots[2]
+#ggp
