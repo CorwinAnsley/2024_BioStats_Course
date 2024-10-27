@@ -6,11 +6,20 @@ library(ggplot2)
 library(ggfortify)
 
 #Import Data
-annotations = read.table("C:/Users/2266643A/repos/2024_BioStats_Course/Data_Report_Assessment/Annotations.csv", header=TRUE, row.names=1, sep="\t")
-de_gout_vs_hc = read.table("C:/Users/2266643A/repos/2024_BioStats_Course/Data_Report_Assessment/DE_GOUT_vs_HC.csv", header=TRUE, row.names=1, sep="\t")
-de_sa_vs_hc = read.table("C:/Users/2266643A/repos/2024_BioStats_Course/Data_Report_Assessment/DE_SA_vs_HC.csv", header=TRUE, row.names=1, sep="\t")
-exprn_table = read.table("C:/Users/2266643A/repos/2024_BioStats_Course/Data_Report_Assessment/Expression_Table.csv", header=TRUE, row.names=1, sep="\t")
-sample_info = read.table("C:/Users/2266643A/repos/2024_BioStats_Course/Data_Report_Assessment/Sample_Information.csv", header=TRUE, row.names=1, sep="\t")
+
+#Define directories wherE data is stored and saved
+#DATADIR = "C:/Users/2266643A/repos/2024_BioStats_Course/Data_Report_Assessment"
+DATADIR = "C:/Users/Curry/repos/Bioinfo_Msc/2024_BioStats_Course/Data_Report_Assessment"
+
+#Define directory/filename to save plots
+#PLOTSDIR = "C:\\Users\\2266643A\\repos\\2024_BioStats_Course\\Coursework_plots\\plot_"
+PLOTSDIR = "C:\\Users\\CURRY\\repos\\Bioinfo_Msc\\2024_BioStats_Course\\Coursework_plots\\plot_"
+
+annotations = read.table(paste(DATADIR,"/Annotations.csv",sep=""), header=TRUE, row.names=1, sep="\t")
+de_gout_vs_hc = read.table(paste(DATADIR,"/DE_GOUT_vs_HC.csv",sep=""), header=TRUE, row.names=1, sep="\t")
+de_sa_vs_hc = read.table(paste(DATADIR,"/DE_SA_vs_HC.csv",sep=""), header=TRUE, row.names=1, sep="\t")
+exprn_table = read.table(paste(DATADIR,"/Expression_Table.csv",sep=""), header=TRUE, row.names=1, sep="\t")
+sample_info = read.table(paste(DATADIR,"/Sample_Information.csv",sep=""), header=TRUE, row.names=1, sep="\t")
 
 #Are groups well matched 
 sample_info$SAMPLE_GROUP=as.factor(sample_info$SAMPLE_GROUP)
@@ -97,7 +106,7 @@ create_plots_gene_ex = function(df, exprn_table, num_plots, sample_info) { #sort
     geom_point(fill = "blue") + 
     labs(x="samplegroup", y="expression")
     ggp
-    filename = paste('C:\\Users\\2266643A\\repos\\2024_BioStats_Course\\Coursework_plots\\plot_', gene_symbol, sep='_')
+    filename = paste(PLOTSDIR, gene_symbol, sep='_')
     #ggsave('C:\\Users\\2266643A\\repos\\2024_BioStats_Course\\plot.png')
     ggsave(paste(filename, '.png'))
   }
@@ -113,12 +122,12 @@ get_sorted_genes = function(df1, df2) {
     row_name = rownames(df1)[i]
     df1[i,'delta_log2fold'] = abs(df1[i,'log2Fold'] - df2[row_name,'log2Fold'])
     }
-  df1_sorted = df1[order(df1$'delta_log2fold'),,]
+  df1_sorted = df1[order(df1$'delta_log2fold',decreasing=TRUE ),,]
   return(df1_sorted)
 }
 
 de_sa_vs_hc_antd_sig_sorted = get_sorted_genes(de_sa_vs_hc_antd_sig, de_gout_vs_hc) 
 #gout_gene_plots = 
-create_plots_gene_ex(de_sa_vs_hc_antd_sig_sorted, exprn_table, 5, sample_info)
+create_plots_gene_ex(de_sa_vs_hc_antd_sig_sorted, exprn_table, 20, sample_info)
 #ggp = gout_gene_plots[2]
 #ggp
