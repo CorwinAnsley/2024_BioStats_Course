@@ -29,17 +29,48 @@ sample_info_hc = subset(sample_info, sample_info['SAMPLE_GROUP'] == 'HC')
 sample_info_gout = subset(sample_info, sample_info['SAMPLE_GROUP'] == 'GOUT')
 sample_info_sa = subset(sample_info, sample_info['SAMPLE_GROUP'] == 'SEPSIS')
 
+sample_info_hc_vs_gout = subset(sample_info, sample_info['SAMPLE_GROUP'] != 'SEPSIS')
+sample_info_hc_vs_sa = subset(sample_info, sample_info['SAMPLE_GROUP'] != 'GOUT')
+sample_info_sa_vs_gout = subset(sample_info, sample_info['SAMPLE_GROUP'] != 'HC')
+
 summary(sample_info_hc)
 summary(sample_info_gout)
 summary(sample_info_sa)
 summary(sample_info)
 
-#Plot Neutrophils for each group to compare
-ggp = ggplot(sample_info, aes(x=SAMPLE_GROUP, y=NEUTROPHILS)) + geom_boxplot() + labs(x="Sample Group", y="Sample Group", title="Neutrophils in sample groups")
-#ggp
+#Part 1
+####Analysing  Neutrophils for each group to compare
+
+#PLotting Neutrophils VS sampplegroup
+ggp = ggplot(sample_info, aes(x=SAMPLE_GROUP, y=NEUTROPHILS, colour=SAMPLE_GROUP)) + 
+  geom_boxplot() + 
+  labs(x="Sample Group", y="Sample Group", title="Neutrophils in sample groups") +
+  theme(legend.position="none")
+ggp
+
+ggp = ggplot(sample_info, aes(x=SAMPLE_GROUP, y=NEUTROPHILS, colour=SAMPLE_GROUP), title="Neutrophils in sample groups") +
+  geom_point(fill = "blue") + 
+  labs(x="samplegroup", y="neutrophils") +
+  theme(legend.position="none")
+ggp
+
+#Comparing Neutrophils by sex, just to check
+ggp = ggplot(sample_info, aes(x=SEX, y=NEUTROPHILS, colour=SEX)) + 
+  geom_boxplot() + 
+  labs(x="Sex", y="Neutrophil count", title="Neutrophils in sample groups") +
+  theme(legend.position="none")
+ggp
+
+#Performing anova
+model_neutrophils = lm(sample_info$NEUTROPHILS~sample_info$SAMPLE_GROUP)
+anova(model_neutrophils)
+summary(model_neutrophils)
+
+t.test(sample_info_hc_vs_gout$NEUTROPHILS~sample_info_hc_vs_gout$SAMPLE_GROUP)
+t.test(sample_info_hc_vs_sa$NEUTROPHILS~sample_info_hc_vs_sa$SAMPLE_GROUP)
+t.test(sample_info_sa_vs_gout$NEUTROPHILS~sample_info_sa_vs_gout$SAMPLE_GROUP)
 
 #PCA test
-
 PCA = prcomp(t(exprn_table))
 pca_coordinates = data.frame(PCA$x)
 print(pca_coordinates)
@@ -131,3 +162,9 @@ de_sa_vs_hc_antd_sig_sorted = get_sorted_genes(de_sa_vs_hc_antd_sig, de_gout_vs_
 create_plots_gene_ex(de_sa_vs_hc_antd_sig_sorted, exprn_table, 20, sample_info)
 #ggp = gout_gene_plots[2]
 #ggp
+
+##GET GENES SIG FOR BOTH SA AND GOUT
+
+#ARE THEY AFFECTED BY OTHER FACTORS
+
+##DO ALL THIS FOR DIFFERENTIAL GENES BETWEEN GOUT AND SA
