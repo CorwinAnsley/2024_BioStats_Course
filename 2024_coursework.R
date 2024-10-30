@@ -22,7 +22,7 @@ DATADIR = "C:/Users/Curry/repos/Bioinfo_Msc/2024_BioStats_Course/Data_Report_Ass
 
 #Define directory/filename to save plots
 #PLOTSDIR = "C:\\Users\\2266643A\\repos\\2024_BioStats_Course\\Coursework_plots\\plot_"
-PLOTSDIR = "C:\\Users\\CURRY\\repos\\Bioinfo_Msc\\2024_BioStats_Course\\Coursework_plots\\plot_"
+PLOTSDIR = "C:\\Users\\CURRY\\repos\\Bioinfo_Msc\\2024_BioStats_Course\\Coursework_plots\\"
 
 annotations = read.table(paste(DATADIR,"/Annotations.csv",sep=""), header=TRUE, row.names=1, sep="\t")
 de_gout_vs_hc = read.table(paste(DATADIR,"/DE_GOUT_vs_HC.csv",sep=""), header=TRUE, row.names=1, sep="\t")
@@ -129,7 +129,7 @@ get_sample_group_gene_data = function(gene, gene_frame, sample_info) {
 
 #de_df_sorted = de_gout_vs_hc_antd_sig[order(de_gout_vs_hc_antd_sig$'p.adj'),,] 
 
-create_plots_gene_ex = function(df, exprn_table, num_plots, sample_info) { #sort_by = "p.adj"
+create_plots_gene_ex = function(df, exprn_table, num_plots, sample_info, dir = '') { #sort_by = "p.adj"
   #plots = c(length(num_plots))
   #de_df_sorted = de_frame[order(de_frame$'p.adj'),,]
   for (i in 1:num_plots) {
@@ -141,17 +141,18 @@ create_plots_gene_ex = function(df, exprn_table, num_plots, sample_info) { #sort
     geom_point(fill = "blue") + 
     labs(x="samplegroup", y="expression")
     ggp
-    filename = paste(PLOTSDIR, gene_symbol, sep='_')
+    filedir = paste(PLOTSDIR, dir, sep='\\')
+    filename = paste(PLOTSDIR, gene_symbol, sep='\\plot_')
     #ggsave('C:\\Users\\2266643A\\repos\\2024_BioStats_Course\\plot.png')
     ggsave(paste(filename, '.png'))
   }
   #return(plots)
 }
 
-##GET GENES SIG FOR BOTH SA AND GOUT
+##Investigating significant genes for gout and SA
 
-
-volcano_plot_regulated_genes = function(df, p_max = 0.05, log2Fold_threshold = 1, p_column = 'p.adj', log2Fold_column = 'log2Fold', symbol_labels = TRUE) {
+#Creates a volcano plot highlighting nad labeling the most significant genes
+volcano_plot_regulated_genes = function(df, p_max = 0.05, log2Fold_threshold = 1.2, p_column = 'p.adj', log2Fold_column = 'log2Fold', symbol_labels = TRUE) {
   # adding label to de tables for up and down regulated genes
   df$diffexpr = "NO" 
   df$diffexpr[df[log2Fold_column] > log2Fold_threshold & df[p_column] < p_max] = "UP"
@@ -178,13 +179,12 @@ de_gout_vs_hc_annotated = get_annotated_data(de_gout_vs_hc, annotations)
 de_sa_vs_hc_annotated = get_annotated_data(de_sa_vs_hc, annotations)
 
 volcano_plot_regulated_genes(de_gout_vs_hc_annotated)
-volcano_plot_regulated_genes(de_sa_vs_hc_annotated, log2Fold_threshold = 8, symbol_labels=TRUE)
+volcano_plot_regulated_genes(de_sa_vs_hc_annotated, log2Fold_threshold = 8.4, symbol_labels=TRUE)
 
-de_gout_vs_hc_antd_sig = filter_for_sig_genes(de_gout_vs_hc_annotated,log2Fold_threshold=1)
-de_sa_vs_hc_antd_sig = filter_for_sig_genes(de_sa_vs_hc_annotated,log2Fold_threshold=8)
+de_gout_vs_hc_antd_sig = filter_for_sig_genes(de_gout_vs_hc_annotated,log2Fold_threshold=1.2)
+de_sa_vs_hc_antd_sig = filter_for_sig_genes(de_sa_vs_hc_annotated,log2Fold_threshold=8.4)
 
-ggp = ggplot(data=de_sa_vs_hc, aes(x=log2Fold, y=-log10(p.adj))) + geom_point()
-ggp
+create_plots_gene_ex(de_sa_vs_hc_antd_sig_sorted, exprn_table, 11, sample_info, dir='Gout_genes')
 
 #de_sig_antd_sa_gout = merge(de_sa_vs_hc_antd_sig, de_gout_vs_hc_antd_sig, by.x=0, by.y=0)
 
@@ -193,18 +193,6 @@ ggp
 
 ##DO ALL THIS FOR DIFFERENTIAL GENES BETWEEN GOUT AND SA
 
-#sort genes by biggest difference in log2fold
-get_sorted_genes = function(df1, df2) {
-  #df1 <- df1 %>% 
-  #  add_column(delta_log2fold = 0)
-  df1[,'delta_log2fold'] = 0
-  for (i in 1:nrow(df1)) { 
-    row_name = rownames(df1)[i]
-    df1[i,'delta_log2fold'] = abs(df1[i,'log2Fold'] - df2[row_name,'log2Fold'])
-  }
-  df1_sorted = df1[order(df1$'delta_log2fold',decreasing=TRUE ),,]
-  return(df1_sorted)
-}
 
 de_sa_vs_hc_antd_sig_sorted = get_sorted_genes(de_sa_vs_hc_antd_sig, de_gout_vs_hc) 
 #gout_gene_plots = 
