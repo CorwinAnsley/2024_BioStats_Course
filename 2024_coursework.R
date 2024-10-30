@@ -104,8 +104,9 @@ get_annotated_data = function(data_frame, annotations) {
 }
 
 # filters for values below set p threshold
-filter_for_sig_genes = function(data_frame, p_max = 0.05, p_column = 'p.adj') {
+filter_for_sig_genes = function(data_frame, p_max = 0.05, log2Fold_threshold = 0, p_column = 'p.adj', log2Fold_column = 'log2Fold') {
   data_frame = subset(data_frame, data_frame[p_column] < p_max)
+  data_frame = subset(data_frame, abs(data_frame[log2Fold_column]) > log2Fold_threshold)
   return(data_frame)
 }
 
@@ -125,12 +126,6 @@ get_sample_group_gene_data = function(gene, gene_frame, sample_info) {
   return (gene_data)
 }
 
-
-de_gout_vs_hc_annotated = get_annotated_data(de_gout_vs_hc, annotations)
-de_sa_vs_hc_annotated = get_annotated_data(de_sa_vs_hc, annotations)
-
-de_gout_vs_hc_antd_sig = filter_for_sig_genes(de_gout_vs_hc_annotated)
-de_sa_vs_hc_antd_sig = filter_for_sig_genes(de_sa_vs_hc_annotated)
 
 #de_df_sorted = de_gout_vs_hc_antd_sig[order(de_gout_vs_hc_antd_sig$'p.adj'),,] 
 
@@ -153,14 +148,10 @@ create_plots_gene_ex = function(df, exprn_table, num_plots, sample_info) { #sort
   #return(plots)
 }
 
-
-#ggp = gout_gene_plots[2]
-#ggp
-
 ##GET GENES SIG FOR BOTH SA AND GOUT
 
 
-volcano_plot_regulated_genes = function(df, p_max = 0.05, log2Fold_threshold = 0.6, p_column = 'p.adj', log2Fold_column = 'log2Fold') {
+volcano_plot_regulated_genes = function(df, p_max = 0.05, log2Fold_threshold = 1, p_column = 'p.adj', log2Fold_column = 'log2Fold', symbol_labels = TRUE) {
   # adding label to de tables for up and down regulated genes
   df$diffexpr = "NO" 
   df$diffexpr[df[log2Fold_column] > log2Fold_threshold & df[p_column] < p_max] = "UP"
@@ -168,23 +159,34 @@ volcano_plot_regulated_genes = function(df, p_max = 0.05, log2Fold_threshold = 0
   
   # adding name labels for the significant genes
   df$delabel = NA
-  df$delabel[df$diffexpr != "NO"] = df$symbol[df$diffexpr != "NO"]
-                                                         
+  if (symbol_labels) {
+    df$delabel[df$diffexpr != "NO"] = df$symbol[df$diffexpr != "NO"]
+  }
+  
   ggp = ggplot(data=df, aes(x=log2Fold, y=-log10(p.adj), col=diffexpr, label=delabel)) + 
     geom_point() +
     theme_minimal() +
-    geom_text() +
+    geom_text_repel(max.overlaps=100) +
+    scale_color_manual(values=c("darkcyan", "black", "darkred")) +
     geom_vline(xintercept=c(-log2Fold_threshold , log2Fold_threshold ), col="red") +
-    geom_hline(yintercept=-log10(p_max), col="red")
+    geom_hline(yintercept=-log10(p_max), col="red") +
+    theme(legend.position="none")
   ggp
 }
 
+de_gout_vs_hc_annotated = get_annotated_data(de_gout_vs_hc, annotations)
+de_sa_vs_hc_annotated = get_annotated_data(de_sa_vs_hc, annotations)
+
 volcano_plot_regulated_genes(de_gout_vs_hc_annotated)
+volcano_plot_regulated_genes(de_sa_vs_hc_annotated, log2Fold_threshold = 8, symbol_labels=TRUE)
+
+de_gout_vs_hc_antd_sig = filter_for_sig_genes(de_gout_vs_hc_annotated,log2Fold_threshold=1)
+de_sa_vs_hc_antd_sig = filter_for_sig_genes(de_sa_vs_hc_annotated,log2Fold_threshold=8)
 
 ggp = ggplot(data=de_sa_vs_hc, aes(x=log2Fold, y=-log10(p.adj))) + geom_point()
 ggp
 
-de_sig_antd_sa_gout = merge(de_sa_vs_hc_antd_sig, de_gout_vs_hc_antd_sig, by.x=0, by.y=0)
+#de_sig_antd_sa_gout = merge(de_sa_vs_hc_antd_sig, de_gout_vs_hc_antd_sig, by.x=0, by.y=0)
 
 
 #ARE THEY AFFECTED BY OTHER FACTORS
