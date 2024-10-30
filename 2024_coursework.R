@@ -14,6 +14,10 @@ options(xtable.timestamp="")
 install.packages("ggrepel")
 library(ggrepel)
 
+install.packages("dplyr")
+library(dplyr)
+
+
 #####Import Data#####
 
 #Define directories wherE data is stored and saved
@@ -49,8 +53,6 @@ summary(sample_info_gout)
 summary(sample_info_sa)
 summary(sample_info)
 
-de_gout_vs_hc = label_regulated_genes(de_gout_vs_hc)
-de_sa_vs_hc = label_regulated_genes(de_sa_vs_hc)
 
 #Part 1
 ####Analysing  Neutrophils for each group to compare
@@ -81,9 +83,9 @@ xtable(anova(model_neutrophils))
 anova(model_neutrophils)
 summary(model_neutrophils)
 
-t.test(sample_info_hc_vs_gout$NEUTROPHILS~sample_info_hc_vs_gout$SAMPLE_GROUP)
-t.test(sample_info_hc_vs_sa$NEUTROPHILS~sample_info_hc_vs_sa$SAMPLE_GROUP)
-t.test(sample_info_sa_vs_gout$NEUTROPHILS~sample_info_sa_vs_gout$SAMPLE_GROUP)
+#t.test(sample_info_hc_vs_gout$NEUTROPHILS~sample_info_hc_vs_gout$SAMPLE_GROUP)
+#t.test(sample_info_hc_vs_sa$NEUTROPHILS~sample_info_hc_vs_sa$SAMPLE_GROUP)
+#t.test(sample_info_sa_vs_gout$NEUTROPHILS~sample_info_sa_vs_gout$SAMPLE_GROUP)
 
 #PCA test
 PCA = prcomp(t(exprn_table))
@@ -119,35 +121,77 @@ get_gene_data = function(gene, gene_frame) {
   return (gene_data)
 }
 
-# Gets gene data along with samplegroup
-get_sample_group_gene_data = function(gene, gene_frame, sample_info) {
+# Gets gene data along with info about sample
+get_sample_info_gene_data = function(gene, gene_frame, sample_info) {
   gene_data = get_gene_data(gene, gene_frame)
   gene_data['sample_group'] = sample_info['SAMPLE_GROUP']
+  gene_data['sex'] = sample_info['SEX']
+  gene_data['neutrophils'] = sample_info['NEUTROPHILS']
   return (gene_data)
+}
+
+#sort genes by biggest difference in log2fold
+get_sorted_log2fold_diff_genes = function(df1, df2) {
+  #df1 <- df1 %>% 
+  #  add_column(delta_log2fold = 0)
+  df1[,'delta_log2fold'] = 0
+  for (i in 1:nrow(df1)) { 
+    row_name = rownames(df1)[i]
+    df1[i,'delta_log2fold'] = abs(df1[i,'log2Fold'] - df2[row_name,'log2Fold'])
+  }
+  df1_sorted = df1[order(df1$'delta_log2fold',decreasing=TRUE ),,]
+  return(df1_sorted)
 }
 
 
 #de_df_sorted = de_gout_vs_hc_antd_sig[order(de_gout_vs_hc_antd_sig$'p.adj'),,] 
 
-create_plots_gene_ex = function(df, exprn_table, num_plots, sample_info, dir = '') { #sort_by = "p.adj"
-  #plots = c(length(num_plots))
-  #de_df_sorted = de_frame[order(de_frame$'p.adj'),,]
+#create plots of gene expression by sample group
+create_plots_gene_ex = function(df, exprn_table, num_plots, sample_info, dir = '') { 
   for (i in 1:num_plots) {
     gene_symbol = df[i,'symbol']
     print(gene_symbol)
-    gene_data = get_sample_group_gene_data(rownames(df)[i], exprn_table, sample_info)
+    gene_data = get_sample_info_gene_data(rownames(df)[i], exprn_table, sample_info)
     #plot_title = gene_symbol
     ggp = ggplot(gene_data, aes(x=sample_group, y=log10(gene), colour=sample_group), title=gene_symbol) +
     geom_point(fill = "blue") + 
-    labs(x="samplegroup", y="expression")
+    labs(x="samplegroup", y="expression") +
+      scale_color_manual(values=c("darkcyan", "chartreuse3", "darkred")) +
+    theme(legend.position="none")
     ggp
     filedir = paste(PLOTSDIR, dir, sep='\\')
-    filename = paste(PLOTSDIR, gene_symbol, sep='\\plot_')
+    print(filedir)
+    filename = paste('\\plot_', gene_symbol, sep='')
+    print(filename)
+    filepath = paste(filedir, filename, sep='\\')
     #ggsave('C:\\Users\\2266643A\\repos\\2024_BioStats_Course\\plot.png')
-    ggsave(paste(filename, '.png'))
+    ggsave(paste(filepath, '.pdf'))
   }
-  #return(plots)
 }
+
+#create plots of gene expression vs neutrophil count
+create_plots_gene_ex_neutrophils = function(df, exprn_table, num_plots, sample_info, dir = '') { 
+  for (i in 1:num_plots) {
+    gene_symbol = df[i,'symbol']
+    print(gene_symbol)
+    gene_data = get_sample_info_gene_data(rownames(df)[i], exprn_table, sample_info)
+    #plot_title = gene_symbol
+    ggp = ggplot(gene_data, aes(x=neutrophils, y=log10(gene), colour=sample_group), title=gene_symbol) +
+      geom_point(fill = "blue") + 
+      labs(x="Neutrophil Count", y="Gene Expression") +
+      theme(legend.position="none")
+    ggp
+    filedir = paste(PLOTSDIR, dir, sep='\\')
+    print(filedir)
+    filename = paste('\\plot_neutrophils_', gene_symbol, sep='')
+    print(filename)
+    filepath = paste(filedir, filename, sep='\\')
+    #ggsave('C:\\Users\\2266643A\\repos\\2024_BioStats_Course\\plot.png')
+    ggsave(paste(filepath, '.pdf'))
+  }
+}
+
+ 
 
 ##Investigating significant genes for gout and SA
 
@@ -179,20 +223,79 @@ de_gout_vs_hc_annotated = get_annotated_data(de_gout_vs_hc, annotations)
 de_sa_vs_hc_annotated = get_annotated_data(de_sa_vs_hc, annotations)
 
 volcano_plot_regulated_genes(de_gout_vs_hc_annotated)
-volcano_plot_regulated_genes(de_sa_vs_hc_annotated, log2Fold_threshold = 8.4, symbol_labels=TRUE)
+#volcano_plot_regulated_genes(de_sa_vs_hc_annotated, log2Fold_threshold = 8.4, symbol_labels=TRUE)
 
 de_gout_vs_hc_antd_sig = filter_for_sig_genes(de_gout_vs_hc_annotated,log2Fold_threshold=1.2)
 de_sa_vs_hc_antd_sig = filter_for_sig_genes(de_sa_vs_hc_annotated,log2Fold_threshold=8.4)
 
-create_plots_gene_ex(de_sa_vs_hc_antd_sig_sorted, exprn_table, 11, sample_info, dir='Gout_genes')
+#sort the genes by p values
+de_gout_vs_hc_antd_sig = de_gout_vs_hc_antd_sig[order(de_gout_vs_hc_antd_sig$p.adj,decreasing=FALSE ),,]
+de_sa_vs_hc_antd_sig = de_sa_vs_hc_antd_sig[order(de_sa_vs_hc_antd_sig$p.adj,decreasing=FALSE ),,]
+
+
+create_plots_gene_ex(de_gout_vs_hc_antd_sig, exprn_table, 11, sample_info, dir='GOUT_genes')
+create_plots_gene_ex(de_sa_vs_hc_antd_sig, exprn_table, 11, sample_info, dir='SA_genes')
+
+create_plots_gene_ex_neutrophils(de_gout_vs_hc_antd_sig, exprn_table, 11, sample_info, dir='GOUT_genes')
+create_plots_gene_ex_neutrophils(de_sa_vs_hc_antd_sig, exprn_table, 11, sample_info, dir='SA_genes')
 
 #de_sig_antd_sa_gout = merge(de_sa_vs_hc_antd_sig, de_gout_vs_hc_antd_sig, by.x=0, by.y=0)
 
+#Genes to focus on:
 
-#ARE THEY AFFECTED BY OTHER FACTORS
+PI3_gene_data = get_sample_info_gene_data('ENSG00000124102', exprn_table, sample_info)
+SPRR2C_gene_data = get_sample_info_gene_data('ENSG00000229035', exprn_table, sample_info)
+GATD3A_gene_data = get_sample_info_gene_data('ENSG00000160221', exprn_table, sample_info)
+
+get_anova_table_neutrophil_genex = function(gene_data) {
+  model1 = lm(gene_data$neutrophils~gene_data$gene)
+  xtable(anova(model1))
+}
+#Are they affected by other factors?
+get_anova_table_neutrophil_genex(PI3_gene_data)
+get_anova_table_neutrophil_genex(SPRR2C_gene_data)
+get_anova_table_neutrophil_genex(GATD3A_gene_data)
+
+t.test(GATD3A_gene_data$gene~GATD3A_gene_data$sex)
+t.test(PI3_gene_data$gene~PI3_gene_data$sex)
+t.test(SPRR2C_gene_data$gene~SPRR2C_gene_data$sex)
+
 
 ##DO ALL THIS FOR DIFFERENTIAL GENES BETWEEN GOUT AND SA
 
+# Create de table for two groups
+create_de_table = function(exprn_table, sample_info, group1, group2) {
+  de = data.frame() 
+  samples_group1 = row.names(subset(sample_info, SAMPLE_GROUP == group1))
+  samples_group2 = row.names(subset(sample_info, SAMPLE_GROUP == group2))
+  
+  # Task 13. Create em_young and em_old.
+  em_group1 = exprn_table[samples_group1]
+  em_group2 = exprn_table[samples_group2]
+  for (gene in rownames(exprn_table)) {
+    gene_data_group1 = as.numeric(em_group1[gene,])
+    gene_data_group2 = as.numeric(em_group2[gene,])
+    mean_group1 = mean(gene_data_group1)
+    mean_group2 = mean(gene_data_group2)
+    log2fold = log2(mean_group1) - log2(mean_group2)
+    p = t.test(gene_data_group1,gene_data_group2)
+    p = p$p.value
+    de[gene,"log2Fold"] = log2fold
+    de[gene,"p"] = p
+  }
+  p_adj = p.adjust (de[,"p"], method="fdr")
+  de[,"p.adj"] = p_adj
+  return (de)
+}
+
+exprn_table_small = exprn_table[1:10, ]
+de_sa_vs_gout = create_de_table(exprn_table, sample_info, "SA", "GOUT")
+
+de_sa_vs_gout_annotated = get_annotated_data(de_sa_vs_gout, annotations)
+
+volcano_plot_regulated_genes(de_sa_vs_gout_annotated,log2Fold_threshold=8.4)
+
+de_sa_vs_gout_antd_sig = filter_for_sig_genes(de_sa_vs_gout_annotated,log2Fold_threshold=8.4)
 
 de_sa_vs_hc_antd_sig_sorted = get_sorted_genes(de_sa_vs_hc_antd_sig, de_gout_vs_hc) 
 #gout_gene_plots = 
